@@ -5,13 +5,11 @@ Escreva um ou dois parágrafos resumindo o objetivo do seu projeto.
 
 * Bernardo Oliveira Pires
 * Nathan Gonçalves de Oliveira
+* Philippe Roberto Dutra Chaves Vieira
 * Vitor de Souza Xavier
-* Nome completo do aluno 4
-* Nome completo do aluno 5
-* Nome completo do aluno 6
 
 ## Professores responsáveis
 
-* Nome completo do professor 1
-* Nome completo do professor 2
+* João Caram Santos de Oliveira
+
 

@@ -1,19 +1,21 @@
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.Scanner;
 
+// Classe para representar uma empresa interessada
 class EmpresaInteressada {
-    private String id;
-    private int quantidade;
-    private int valor;
+    private String id; // ID da empresa
+    private int quantidade; // Quantidade de energia desejada
+    private int valor; // Valor oferecido pela energia
 
+    // Construtor para inicializar os atributos da empresa
     public EmpresaInteressada(String id, int quantidade, int valor) {
         this.id = id;
         this.quantidade = quantidade;
         this.valor = valor;
     }
 
+    // Métodos getter para acessar os atributos da empresa
     public String getId() {
         return id;
     }
@@ -27,17 +29,20 @@ class EmpresaInteressada {
     }
 }
 
+// Classe para armazenar o melhor resultado do leilão
 class MelhorResultado {
-    private int lucroMaximo;
-    private List<EmpresaInteressada> melhorSelecao;
-    private int energiaSobrando;
+    private int lucroMaximo; // Maior lucro obtido
+    private List<EmpresaInteressada> melhorSelecao; // Lista de empresas selecionadas
+    private int energiaSobrando; // Quantidade de energia que restou
 
+    // Construtor para inicializar os atributos com valores padrão
     public MelhorResultado() {
         this.lucroMaximo = 0;
         this.melhorSelecao = new ArrayList<>();
         this.energiaSobrando = 0;
     }
 
+    // Métodos getter e setter para acessar e modificar os atributos
     public int getLucroMaximo() {
         return lucroMaximo;
     }
@@ -63,13 +68,16 @@ class MelhorResultado {
     }
 }
 
+// Classe principal para resolver o problema do leilão usando programação dinâmica
 public class LeilaoDinamico {
 
+    // Método para resolver o problema do leilão
     public MelhorResultado resolverLeilao(int quantidadeDisponivel, List<EmpresaInteressada> lances) {
-        int n = lances.size();
-        int[][] dp = new int[n + 1][quantidadeDisponivel + 1];
-        boolean[][] solucao = new boolean[n + 1][quantidadeDisponivel + 1];
+        int n = lances.size(); // Número de lances
+        int[][] dp = new int[n + 1][quantidadeDisponivel + 1]; // Tabela de programação dinâmica
+        boolean[][] solucao = new boolean[n + 1][quantidadeDisponivel + 1]; // Tabela para rastrear a solução
 
+        // Preenchimento da tabela de programação dinâmica
         for (int i = 1; i <= n; i++) {
             for (int w = 0; w <= quantidadeDisponivel; w++) {
                 EmpresaInteressada lance = lances.get(i - 1);
@@ -86,6 +94,7 @@ public class LeilaoDinamico {
             }
         }
 
+        // Recuperação da melhor seleção de lances a partir da tabela de solução
         List<EmpresaInteressada> selecao = new ArrayList<>();
         for (int i = n, w = quantidadeDisponivel; i > 0; i--) {
             if (solucao[i][w]) {
@@ -95,6 +104,7 @@ public class LeilaoDinamico {
             }
         }
 
+        // Criação do objeto MelhorResultado para armazenar o resultado final
         MelhorResultado resultado = new MelhorResultado();
         resultado.setLucroMaximo(dp[n][quantidadeDisponivel]);
         resultado.setMelhorSelecao(selecao);
@@ -102,49 +112,47 @@ public class LeilaoDinamico {
         return resultado;
     }
 
+    // Método principal para executar o programa
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
+        // Solicita ao usuário a quantidade disponível de energia
         System.out.println("Digite a quantidade disponível de energia (em MW):");
         int quantidadeDisponivel = scanner.nextInt();
 
-        System.out.println("Digite o tamanho do conjunto inicial (T):");
-        int T = scanner.nextInt();
+        // Solicita ao usuário o número de lances
+        System.out.println("Digite o número de lances:");
+        int numeroDeLances = scanner.nextInt();
+        scanner.nextLine(); // Consumir a nova linha restante
 
-        System.out.println("Digite o número de testes a serem executados para cada tamanho de conjunto:");
-        int numTestes = scanner.nextInt();
-
-        Random random = new Random();
-        long tempoTotalInicio = System.nanoTime();
-
-        for (int tamanhoConjunto = T; tamanhoConjunto <= 10 * T; tamanhoConjunto += T) {
-            int somaLucro = 0;
-            long somaTempo = 0;
-            for (int teste = 0; teste < numTestes; teste++) {
-                List<EmpresaInteressada> lances = new ArrayList<>();
-                for (int i = 0; i < tamanhoConjunto; i++) {
-                    String id = "I" + (i + 1);
-                    int quantidade = random.nextInt(quantidadeDisponivel / 2) + 1; // Gera quantidade entre 1 e quantidadeDisponivel/2
-                    int valor = random.nextInt(1000) + 1; // Gera valor entre 1 e 1000
-                    lances.add(new EmpresaInteressada(id, quantidade, valor));
-                }
-
-                LeilaoDinamico solver = new LeilaoDinamico();
-                long inicio = System.nanoTime();
-                MelhorResultado resultado = solver.resolverLeilao(quantidadeDisponivel, lances);
-                long fim = System.nanoTime();
-                somaTempo += (fim - inicio);
-                somaLucro += resultado.getLucroMaximo();
-            }
-            double mediaLucro = (double) somaLucro / numTestes;
-            double mediaTempo = (double) somaTempo / numTestes / 1_000_000; // Converter para milissegundos
-            System.out.println("Tamanho do conjunto: " + tamanhoConjunto + ", Lucro médio: " + mediaLucro + ", Tempo médio: " + mediaTempo + " ms");
+        // Cria uma lista para armazenar os lances das empresas
+        List<EmpresaInteressada> lances = new ArrayList<>();
+        for (int i = 0; i < numeroDeLances; i++) {
+            // Solicita ao usuário o ID, a quantidade e o valor de cada lance
+            System.out.println("Digite o ID, a quantidade e o valor do lance " + (i + 1) + " (ex: I1 500 500):");
+            String id = scanner.next();
+            int quantidade = scanner.nextInt();
+            int valor = scanner.nextInt();
+            lances.add(new EmpresaInteressada(id, quantidade, valor));
         }
 
-        long tempoTotalFim = System.nanoTime();
+        LeilaoDinamico solver = new LeilaoDinamico();
+        long tempoTotalInicio = System.nanoTime(); // Captura o tempo inicial de execução
+        MelhorResultado resultado = solver.resolverLeilao(quantidadeDisponivel, lances);
+        long tempoTotalFim = System.nanoTime(); // Captura o tempo final de execução
+        
         double tempoTotalExecucao = (tempoTotalFim - tempoTotalInicio) / 1_000_000_000.0; // Converter para segundos
-        System.out.println("Tempo total de execução: " + tempoTotalExecucao + " s");
 
-        scanner.close();
+        // Exibe o melhor lucro, a energia sobrando e os lances selecionados
+        System.out.println("Melhor lucro: " + resultado.getLucroMaximo());
+        System.out.println("Energia sobrando: " + resultado.getEnergiaSobrando() + " MW");
+        System.out.println("Lances selecionados:");
+        for (EmpresaInteressada lance : resultado.getMelhorSelecao()) {
+            System.out.println("ID: " + lance.getId() + ", Quantidade: " + lance.getQuantidade() + ", Valor: " + lance.getValor());
+        }
+
+        // Exibe o tempo total de execução
+        System.out.println("Tempo total de execução: " + tempoTotalExecucao + " s");
+        scanner.close(); // Fecha o scanner
     }
 }

@@ -1,122 +1,108 @@
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
-// Classe para representar uma empresa interessada
-class EmpresaInteressada {
-    private String id; // ID da empresa
-    private int quantidade; // Quantidade de energia desejada
-    private int valor; // Valor oferecido pela energia
+public class AlgoritmoOtimizacao {
+    private List<Oferta> melhorSelecao; // Lista para armazenar a melhor seleção de ofertas encontradas
+    private int maiorValorTotal; // Atributo para armazenar o maior valor total
 
-    // Construtor para inicializar os atributos da empresa
-    public EmpresaInteressada(String id, int quantidade, int valor) {
-        this.id = id;
-        this.quantidade = quantidade;
-        this.valor = valor;
+    // Construtor da classe
+    public AlgoritmoOtimizacao() {
+        this.melhorSelecao = new ArrayList<>(); // Inicializa a lista de melhor seleção
+        this.maiorValorTotal = 0; // Inicializa o maior valor total como 0
     }
 
-    // Métodos getter para acessar os atributos da empresa
-    public String getId() {
-        return id;
+    // Método para resolver o problema de otimização
+    public int calcularMelhorValor(List<Oferta> ofertas, int limiteEnergia) {
+        maiorValorTotal = 0; // Reinicia o maior valor total a cada chamada
+        melhorSelecao.clear(); // Limpa a melhor seleção anterior
+
+        // Ordena as ofertas por energia (em ordem crescente)
+        Collections.sort(ofertas, Comparator.comparingInt(Oferta::getEnergia));
+
+        // Chama o método de backtracking para encontrar a melhor seleção
+        buscarMelhorSelecao(ofertas, limiteEnergia, 0, 0, new ArrayList<>());
+        return maiorValorTotal; // Retorna o maior valor total encontrado
     }
 
-    public int getQuantidade() {
-        return quantidade;
+    // Método recursivo de backtracking com poda
+    private void buscarMelhorSelecao(List<Oferta> ofertas, int energiaRestante, int valorAtual, int indiceAtual,
+                                     List<Oferta> selecaoAtual) {
+        // Condição de término: se a energia restante é menor que zero ou se percorreu todas as ofertas
+        if (energiaRestante < 0 || indiceAtual >= ofertas.size()) {
+            // Atualiza a melhor seleção e o maior valor total se encontrou uma melhor solução
+            if (valorAtual > maiorValorTotal) {
+                melhorSelecao = new ArrayList<>(selecaoAtual); // Copia a seleção atual para a melhor seleção
+                maiorValorTotal = valorAtual; // Atualiza o maior valor total
+            }
+            return; // Retorna para encerrar a execução do método
+        }
+
+        // Poda: se a seleção atual já não pode superar a melhor encontrada, retorne
+        if (valorAtual + estimarValorMaximo(ofertas, indiceAtual, energiaRestante) <= maiorValorTotal) {
+            return;
+        }
+
+        // Não inclui a oferta atual e segue para a próxima
+        buscarMelhorSelecao(ofertas, energiaRestante, valorAtual, indiceAtual + 1, selecaoAtual);
+
+        // Inclui a oferta atual se a energia permitir
+        Oferta oferta = ofertas.get(indiceAtual); // Obtém a oferta atual
+        if (energiaRestante >= oferta.getEnergia()) {
+            selecaoAtual.add(oferta); // Adiciona a oferta atual à seleção
+            // Chama recursivamente para a próxima oferta com energia e valor atualizados
+            buscarMelhorSelecao(ofertas, energiaRestante - oferta.getEnergia(), valorAtual + oferta.getValor(), indiceAtual + 1, selecaoAtual);
+            selecaoAtual.remove(selecaoAtual.size() - 1); // Remove a oferta atual da seleção (backtrack)
+        }
     }
 
-    public int getValor() {
-        return valor;
-    }
-}
-
-// Classe para armazenar o melhor resultado do leilão
-class MelhorResultado {
-    private int lucroMaximo; // Maior lucro obtido
-    private List<EmpresaInteressada> melhorSelecao; // Lista de empresas selecionadas
-    private int energiaSobrando; // Quantidade de energia que restou
-
-    // Construtor para inicializar os atributos com valores padrão
-    public MelhorResultado() {
-        this.lucroMaximo = 0;
-        this.melhorSelecao = new ArrayList<>();
-        this.energiaSobrando = 0;
+    // Método auxiliar para estimar o valor máximo possível a partir de um ponto dado
+    private int estimarValorMaximo(List<Oferta> ofertas, int indiceAtual, int energiaRestante) {
+        int valorMaximo = 0;
+        for (int i = indiceAtual; i < ofertas.size(); i++) {
+            if (energiaRestante >= ofertas.get(i).getEnergia()) {
+                energiaRestante -= ofertas.get(i).getEnergia();
+                valorMaximo += ofertas.get(i).getValor();
+            }
+        }
+        return valorMaximo;
     }
 
-    // Métodos getter e setter para acessar e modificar os atributos
-    public int getLucroMaximo() {
-        return lucroMaximo;
+    // Método para imprimir a melhor seleção de ofertas encontrada
+    public void exibirMelhorSelecao() {
+        System.out.println("Ofertas Selecionadas:");
+        if (melhorSelecao.isEmpty()) {
+            System.out.println("Nenhuma oferta selecionada."); // Mensagem se nenhuma oferta foi selecionada
+        } else {
+            // Imprime cada oferta da melhor seleção
+            for (Oferta oferta : melhorSelecao) {
+                System.out.println("- Energia: " + oferta.getEnergia() + " MW, Valor: " + oferta.getValor() + " dinheiros");
+            }
+        }
     }
 
-    public void setLucroMaximo(int lucroMaximo) {
-        this.lucroMaximo = lucroMaximo;
-    }
-
-    public List<EmpresaInteressada> getMelhorSelecao() {
+    // Método para obter a melhor seleção de ofertas
+    public List<Oferta> getMelhorSelecao() {
         return melhorSelecao;
     }
 
-    public void setMelhorSelecao(List<EmpresaInteressada> melhorSelecao) {
-        this.melhorSelecao = melhorSelecao;
-    }
-
-    public int getEnergiaSobrando() {
-        return energiaSobrando;
-    }
-
-    public void setEnergiaSobrando(int energiaSobrando) {
-        this.energiaSobrando = energiaSobrando;
-    }
-}
-
-// Classe principal para resolver o problema do leilão usando programação
-// dinâmica
-public class LeilaoDinamico {
-
-    // Método para resolver o problema do leilão
-    public MelhorResultado resolverLeilao(int quantidadeDisponivel, List<EmpresaInteressada> lances) {
-        int n = lances.size(); // Número de lances
-        int[][] dp = new int[n + 1][quantidadeDisponivel + 1]; // Tabela de programação dinâmica
-        boolean[][] solucao = new boolean[n + 1][quantidadeDisponivel + 1]; // Tabela para rastrear a solução
-
-        // Preenchimento da tabela de programação dinâmica
-        for (int i = 1; i <= n; i++) {
-            for (int w = 0; w <= quantidadeDisponivel; w++) {
-                EmpresaInteressada lance = lances.get(i - 1);
-                if (lance.getQuantidade() <= w) {
-                    if (lance.getValor() + dp[i - 1][w - lance.getQuantidade()] > dp[i - 1][w]) {
-                        dp[i][w] = lance.getValor() + dp[i - 1][w - lance.getQuantidade()];
-                        solucao[i][w] = true;
-                    } else {
-                        dp[i][w] = dp[i - 1][w];
-                    }
-                } else {
-                    dp[i][w] = dp[i - 1][w];
-                }
-            }
+    // Método para obter a energia total da melhor seleção
+    public int getTotalEnergiaMelhorSelecao() {
+        int energiaTotal = 0;
+        for (Oferta oferta : melhorSelecao) {
+            energiaTotal += oferta.getEnergia();
         }
-
-        // Recuperação da melhor seleção de lances a partir da tabela de solução
-        List<EmpresaInteressada> selecao = new ArrayList<>();
-        for (int i = n, w = quantidadeDisponivel; i > 0; i--) {
-            if (solucao[i][w]) {
-                EmpresaInteressada lance = lances.get(i - 1);
-                selecao.add(lance);
-                w -= lance.getQuantidade();
-            }
-        }
-
-        // Criação do objeto MelhorResultado para armazenar o resultado final
-        MelhorResultado resultado = new MelhorResultado();
-        resultado.setLucroMaximo(dp[n][quantidadeDisponivel]);
-        resultado.setMelhorSelecao(selecao);
-        resultado.setEnergiaSobrando(
-                quantidadeDisponivel - selecao.stream().mapToInt(EmpresaInteressada::getQuantidade).sum());
-        return resultado;
+        return energiaTotal;
     }
 
-    // Método principal para executar o programa
+    // Método para obter o maior valor total
+    public int getMaiorValor() {
+        return maiorValorTotal;
+    }
+
     public static void main(String[] args) {
-        // Definição dos dados de entrada (lances pré-definidos)
-        int quantidadeDisponivel = 8000;
+        // Nosso caso de uso
         List<EmpresaInteressada> lances = new ArrayList<>();
         lances.add(new EmpresaInteressada("I1", 430, 1043));
         lances.add(new EmpresaInteressada("I2", 428, 1188));
@@ -429,24 +415,12 @@ public class LeilaoDinamico {
         lances.add(new EmpresaInteressada("I298", 725, 2900));
         lances.add(new EmpresaInteressada("I299", 825, 3400));
         lances.add(new EmpresaInteressada("I300", 925, 3800));
+        int limiteEnergia = 8000; // Quantidade de energia disponível
 
-        LeilaoDinamico solver = new LeilaoDinamico();
-        long startTime = System.nanoTime(); // Captura o tempo inicial de execução
-        MelhorResultado resultado = solver.resolverLeilao(quantidadeDisponivel, lances);
-        long endTime = System.nanoTime(); // Captura o tempo final de execução
-
-        double duration = (endTime - startTime) / 1_000_000_000.0; // Converte para segundos
-
-        // Exibe o melhor lucro, a energia sobrando e os lances selecionados
-        System.out.println("Melhor lucro: " + resultado.getLucroMaximo());
-        System.out.println("Energia sobrando: " + resultado.getEnergiaSobrando() + " MW");
-        System.out.println("Lances selecionados:");
-        for (EmpresaInteressada lance : resultado.getMelhorSelecao()) {
-            System.out.println(
-                    "ID: " + lance.getId() + ", Quantidade: " + lance.getQuantidade() + ", Valor: " + lance.getValor());
-        }
-
-        // Exibe o tempo total de execução
-        System.out.println("Tempo total de execução: " + duration + " segundos");
+        AlgoritmoOtimizacao algoritmo = new AlgoritmoOtimizacao();
+        int maiorValor = algoritmo.calcularMelhorValor(ofertas, limiteEnergia);
+        algoritmo.exibirMelhorSelecao();
+        System.out.println("Maior valor total: " + maiorValor);
     }
 }
+     
